@@ -42,6 +42,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from rclpy.time import Time
 
 from builtin_interfaces.msg import Duration
 from control_msgs.action import FollowJointTrajectory
@@ -219,12 +220,16 @@ class URTest(unittest.TestCase):
         else:
             raise Exception(f"Exception while calling service: {future.exception()}")
 
-    def feedback_cb(self, fb):
-        self.node.get_logger().info("Feedback {}".format(fb.feedback.actual.positions))
+    def feedback_cb(self, fb_msg):
+        fb: FollowJointTrajectory.Feedback = fb_msg.feedback
+        stamp = Time.from_msg(fb.header.stamp)
+        if not hasattr(self, "prev_stamp") or (stamp-self.prev_stamp).nanoseconds > 1e9:
+            self.node.get_logger().info("Feedback {}".format(fb.actual.positions))
+            self.prev_stamp = Time.from_msg(fb.header.stamp)
 
     def call_action(self, ac_client: ActionClient, g):
         future = ac_client.send_goal_async(g, feedback_callback=self.feedback_cb)
-        rclpy.spin_until_future_complete(self.node, future)
+        rclpy.spin_until_future_complete(self.node, future, timeout_sec=30)
 
         if future.result() is not None:
             return future.result()
