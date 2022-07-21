@@ -219,8 +219,11 @@ class URTest(unittest.TestCase):
         else:
             raise Exception(f"Exception while calling service: {future.exception()}")
 
-    def call_action(self, ac_client, g):
-        future = ac_client.send_goal_async(g)
+    def feedback_cb(self, fb):
+        self.node.get_logger().info("Feedback {}".format(fb.feedback.actual.positions))
+
+    def call_action(self, ac_client: ActionClient, g):
+        future = ac_client.send_goal_async(g, feedback_callback=self.feedback_cb)
         rclpy.spin_until_future_complete(self.node, future)
 
         if future.result() is not None:
