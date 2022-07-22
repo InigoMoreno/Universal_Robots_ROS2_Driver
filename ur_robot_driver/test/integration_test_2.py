@@ -79,7 +79,7 @@ def generate_test_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "initial_joint_controller",
-            default_value="scaled_joint_trajectory_controller",
+            default_value="joint_trajectory_controller",
             description="Type/series of used UR robot.",
         )
     )
@@ -153,18 +153,18 @@ class URTest(unittest.TestCase):
         self.jtc_action_client = ActionClient(
             self.node,
             FollowJointTrajectory,
-            "/scaled_joint_trajectory_controller/follow_joint_trajectory",
+            "/joint_trajectory_controller/follow_joint_trajectory",
         )
         if self.jtc_action_client.wait_for_server(10) is False:
             raise Exception(
-                "Could not reach /scaled_joint_trajectory_controller/follow_joint_trajectory action server,"
+                "Could not reach /joint_trajectory_controller/follow_joint_trajectory action server,"
                 "make sure that controller is active (load + start)"
             )
 
     def test_2_manager(self):
         req = SwitchController.Request()
         req.strictness = SwitchController.Request.BEST_EFFORT
-        req.start_controllers = ["scaled_joint_trajectory_controller"]
+        req.start_controllers = ["joint_trajectory_controller"]
         result = self.call_service(self.switch_controller_client, req)
 
         self.assertEqual(result.ok, True)
